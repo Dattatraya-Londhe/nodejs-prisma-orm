@@ -1,0 +1,57 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch", "fullTextIndex", "referentialIntegrity"]
+  //For SQL fullTextSearch & fullTextIndex both required
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+//one to many relationship
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String?
+  role      Role     @default(USER)
+  posts     Post[]
+  @@fulltext([name])
+}
+
+//many to one 
+model Post {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  published Boolean  @default(false)
+  title     String   @db.VarChar(255)
+  author    User?    @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId  Int?
+  deleted   Boolean  @default(false)
+  //@@fulltext([title])
+}
+
+model Blog {
+  id      Int    @unique
+  content String
+  title   String
+
+  @@fulltext([content])
+  @@fulltext([content, title])
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+
+// When we add somthing in schema.prisma first do npx prisma generate 
+//npx prisma migrate dev --name=init 
+//fulltextsearch seraching for given WORD and not for substring
+//Even though we pass search:"Londhe D N"- it will start seraching for the
+// first word in the given string
